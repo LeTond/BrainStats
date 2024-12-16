@@ -1,7 +1,7 @@
 # FsWeb
 
 *******************************************************************************
-![brain-stats](web/fsweb/static/freeviewcrop.png)
+![brain-stats](web/fsweb/templates/instructions.html)
 
 Веб-оболочка для управления обсчетами МР-морфометрии ГМ во freesurfer.
 
