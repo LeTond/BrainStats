@@ -3,20 +3,27 @@ import json
 
 sys.path.append('/web/Configuration')
 
-from Configuration.key_words_and_directories_list import add_project_log
+from Configuration.key_words_and_directories_list import json_project_names_path
 
 
 class Json:
     def __init__(self):
-        self.add_project_log = add_project_log
+        self.json_project_names_path = json_project_names_path
 
     def read_json(self) -> dict:
         """
         Чтение данных из json
         :return:
         """
-        with open(self.add_project_log) as file:
-            return json.load(file)
+        try:
+            with open(self.json_project_names_path) as file:
+                return json.load(file)
+        except Exception as e:
+            # self.lg.error_log_file(f"{e}: Отсутствует файл ./Logs/created_project_names.json")
+
+            with open(self.json_project_names_path, 'w', encoding='utf-8') as f:
+                json.dump({}, f)
+
 
     def write_json(self, value: dict):
         """
@@ -24,7 +31,7 @@ class Json:
         :param value: словарь с данными для записи
         :return: None
         """
-        with open(self.add_project_log, 'w') as file:
+        with open(self.json_project_names_path, 'w') as file:
             json.dump(value, file)
 
     def read_subject_data(self) -> dict:
