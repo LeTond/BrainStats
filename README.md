@@ -7,12 +7,12 @@
 *******************************************************************************
 ### Table of Contents
 - [Overview](#overview)
-  - [Highlights and Features](#highlights_and_features)
+  - [Highlights and Features](#highlights-and-features)
 - [Getting Started](#getting-started)
-  - [Step 1. Installation](#installation)
-  - [Step 2. Preprocessing](#preprocessing)
-  - [Step 3. Start](#start)
-  - [Step 3. Comparing studies](#comparing)
+  - [Step 1. Installation](#step-1-installation)
+  - [Step 2. Preprocessing](#step-2-preprocessing)
+  - [Step 3. Start](#step-3-start)
+  - [Step 4. Comparing studies](#step-4-comparing-studies)
 - [System requirements](#system-requirements)
 - [Cite](#cite)
 
@@ -24,22 +24,25 @@
 
 # Getting Started
 *******************************************************************************
-## Step 1. Installation
+## Step 1 Installation
+
 ### Установка необходимых библиотек
 <pre>pip install -r requirements.txt</pre>
+
 ### Переход в корневую директорию
 <pre>cd ./web</pre>
+
 ### Запуск локального сервера
 <pre>python manage.py runserver</pre>
 
 *******************************************************************************
-## Step 2. Preprocessing
+## Step 2 Preprocessing
 
 *******************************************************************************
-## Step 3. Start
+## Step 3 Start
 
 *******************************************************************************
-## Step 4. Comparing studies
+## Step 4 Comparing studies
 Веб-приложение позволяет выполнять сравнение двух исследований по референсным объёмам ГМ пациентов.
 
 *******************************************************************************
