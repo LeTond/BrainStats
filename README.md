@@ -16,11 +16,15 @@
 - [System requirements](#system-requirements)
 - [Cite](#cite)
 
-### Overview
+## Overview
 
-#### Highlights and Features
+### Highlights and Features
 Позволяет хранить/удалять результаты обсчета в БД.
+*******************************************************************************
+
 ![database](fsweb.png)
+
+
 
 # Getting Started
 *******************************************************************************
