@@ -2,6 +2,7 @@ import sys
 
 from Backend.json_worker import Json
 from Backend.parsing_aseg_stats import ParsingResults
+from Backend.log_files import Log
 
 sys.path.append('/web/fsweb')
 
@@ -12,10 +13,10 @@ from django.db import transaction
 class AddToSQL:
     def __init__(self):
         self.json = Json()
+        self.lg = Log()
         self.pres = ParsingResults()
 
-    @staticmethod
-    def project(project_name: str) -> int:
+    def project(self, project_name: str) -> int:
         """
         Если проект отсутсвует в БД, то сохраняем его и возвращаем информацию об id,
         иначе возвращаем ключ существующего проекта
@@ -26,7 +27,6 @@ class AddToSQL:
             project = Projects.objects.get(name=project_name)
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.project")
-            print("Проблема в AddToSQL.project")
 
             Projects.objects.create(name=project_name)
             project = Projects.objects.get(name=project_name)
@@ -57,7 +57,6 @@ class AddToSQL:
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.subject")
-            print("Проблема в AddToSQL.subject")
 
     def structure_statistic(self, project_path: str, subject_id: int):
         """
@@ -85,7 +84,6 @@ class AddToSQL:
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.structure_statistic")
-            print("Проблема в AddToSQL.structure_statistic")
 
     def main_statistic(self, project_path: str, subject_id: int):
         """
@@ -113,11 +111,8 @@ class AddToSQL:
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.main_statistic")
-            print("Проблема в AddToSQL.main_statistic")
 
-
-    @staticmethod
-    def pathology(pathology_name: str):
+    def pathology(self, pathology_name: str):
         """
         Добавление патологии в БД
         :param pathology_name: ключ проекта в json файле
@@ -127,14 +122,13 @@ class AddToSQL:
             pathology = Pathology.objects.get(name=pathology_name)
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.pathology")
-            print("Проблема в AddToSQL.pathology")
+
             Pathology.objects.create(name=pathology_name)
             pathology = Pathology.objects.get(name=pathology_name)
 
         return pathology
 
-    @staticmethod
-    def relations_subject_statistic(subject_id: int, id_list: list):
+    def relations_subject_statistic(self, subject_id: int, id_list: list):
         """
         Добавление связи субъекта и статистических данных из таблицы structure_statistic
         :param subject_id: id субъекта
@@ -149,10 +143,8 @@ class AddToSQL:
         
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.relations_subject_statistic")
-            print("Проблема в AddToSQL.relations_subject_statistic")
 
-    @staticmethod
-    def relations_subject_main_statistic(subject_id: int, stat_id: int):
+    def relations_subject_main_statistic(self, subject_id: int, stat_id: int):
         """
         Добавление связи субъекта и статистических данных из таблицы main_statistic
         :param subject_id: id связываемого субъекта
@@ -166,6 +158,5 @@ class AddToSQL:
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в AddToSQL.relations_subject_main_statistic")
-            print("Проблема в AddToSQL.relations_subject_main_statistic")
 
 

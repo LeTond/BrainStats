@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+import asyncio
 
 from Backend.add_to_sqlite import AddToSQL
 from Backend.json_worker import Json
@@ -7,28 +9,40 @@ from Backend.log_files import Log
 from Backend.parsing_aseg_stats import ParsingResults
 
 sys.path.append('/web/Configuration')
-
-from Configuration.key_words_and_directories_list import home_directory, projects_paths
+from Configuration.key_words_and_directories_list import home_directory, projects_paths, subjects_path, list_projects_paths
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 
-
-class FileObserver:
+class EventHandler(FileSystemEventHandler):
     """
     Запускаем обсервер, который будет отслеживать состояние в директории с данными субъектов исследования и
     по-необходимости добавлять обсчитанные данные в БД.
     """
-    def __init__(self):
-        self.projects_paths = projects_paths
+    def __init__(self, folder_name):
+        self.folder_name = folder_name
+        self.subjects_path = subjects_path
         self.home_directory = home_directory
+        self.list_projects_paths = list_projects_paths
         self.lg = Log()
         self.json = Json()
         self.sql = AddToSQL()
         self.pr = ParsingResults()
         self.structure_statistic = self.pr.structure_statistic_data
         self.main_statistic = self.pr.main_statistic_data
+        self.__is_active_observer = True
+
+    @property
+    def is_active_observer(self):
+        return self.__is_active_observer
+
+    @is_active_observer.setter
+    def is_active_observer(self, new_status):
+        if not isinstance(new_status, bool):
+            raise TypeError('new_status must be BOOL')
+        else:
+            self.__is_active_observer = new_status
 
     def search_existing_projects(self) -> list:
         """
@@ -41,10 +55,13 @@ class FileObserver:
                 for file in files:
                     if 'aseg.stats' == file:
                         directs_list.append(directs)
+        
+            self.lg.event_log_file(f"Найден новый aseg.stats в EventHandler.search_existing_projects")
             return directs_list
+        
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в FileObserver.search_existing_projects")
-            print("Проблема в FileObserver.search_existing_projects")
+            self.lg.error_log_file(f"{e}: Проблема в EventHandler.search_existing_projects")
+            print("Проблема в EventHandler.search_existing_projects")
 
     def search_aseg_stats(self):
         """
@@ -60,6 +77,9 @@ class FileObserver:
                     self.save_new_project(self.pr.project_name(project_path), project_path)
                     write_to_list = open(self.projects_paths, 'a')
                     write_to_list.write(project_path + '\n')
+        
+            self.lg.event_log_file(f"Выполнено добавление записи о новом проекте в {self.projects_paths} FileObserver.search_aseg_stats")
+
         except ConnectionError:
             self.lg.error_log_file(f"ConnectionError: {project_path}")
             print("Ошибка подключения к БД")
@@ -84,7 +104,65 @@ class FileObserver:
             self.sql.main_statistic(project_path, subject_id)
 
             # self.json.delete_subject_data_from_json(project_name)
+            self.lg.event_log_file(f"Added {project_name.upper()} aseg.stats to Sqlite")
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в FileObserver.save_new_project")
-            print("Проблема в FileObserver.save_new_project")
+            self.lg.error_log_file(f"{e}: Problem with EventHandler.save_new_project")
+
+    def on_any_event(self, event):
+        print(event.src_path)
+        pass
+
+    def on_created(self, event):
+        new_project_path = self.subjects_path + self.folder_name
+
+        self.lg.event_log_file(f"Сработал метод ON_CREATED {event.src_path}")
+        if (event.src_path == f"{new_project_path}/stats/aseg.stats"):
+            try:
+                list_projects = open(self.list_projects_paths, 'r')    # Открываем лог с сохранёнными проектами
+                list_projects = list_projects.read().split('\n')
+
+                self.save_new_project(self.pr.project_name(new_project_path), new_project_path)
+                
+                if new_project_path not in list_projects:
+                    write_to_list = open(self.list_projects_paths, 'a')
+                    write_to_list.write(new_project_path + '\n')
+                   
+                    self.lg.event_log_file(f"Выполнено добавление записи о новом проекте в {self.list_projects_paths} EventHandler.on_created ")
+                    self.lg.event_log_file(f"Выполнили остановку Observer для {self.folder_name} EventHandler.on_created")
+                    
+                    self.is_active_observer = False
+
+            except ConnectionError:
+                self.lg.error_log_file(f"ConnectionError: {new_project_path}")
+
+    def on_deleted(self, event):
+        pass
+
+    def on_modified(self, event):
+        pass
+
+    def on_moved(self, event):
+        print(event.src_path)
+        pass
+
+
+class RunObserver:
+    def __init__(self, folder_name):
+        self.subjects_path = subjects_path
+        self.folder_name = folder_name
+        self.lg = Log()
+        self.lg.event_log_file(f"START RunObserver for {self.folder_name}")
+    
+    async def __call__(self):
+        event_handler = EventHandler(self.folder_name)
+        observer = Observer()
+        observer.schedule(event_handler, path = (self.subjects_path + self.folder_name + '/stats/'), recursive = False)
+        observer.start()
+
+        while event_handler.is_active_observer:
+            try:
+                await asyncio.sleep(60)
+            
+            except KeyboardInterrupt:
+                observer.stop()

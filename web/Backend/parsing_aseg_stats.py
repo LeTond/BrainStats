@@ -7,8 +7,7 @@ class ParsingResults:
     def __init__(self):
         self.lg = Log()
 
-    @staticmethod
-    def open_aseg_stat_file(project_path: str) -> list:
+    def open_aseg_stat_file(self, project_path: str) -> list:
         """
         Прочитывает файл со статистикой и возвращает его в виде списка
         :param project_path:

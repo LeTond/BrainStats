@@ -1,4 +1,4 @@
-import sys
+import os, sys
 import json
 
 sys.path.append('/web/Configuration')
@@ -9,6 +9,12 @@ from Configuration.key_words_and_directories_list import json_project_names_path
 class Json:
     def __init__(self):
         self.json_project_names_path = json_project_names_path
+        self.check_json_exist()
+
+    def check_json_exist(self):
+        if not os.path.exists(self.json_project_names_path):
+            with open(self.json_project_names_path, 'w', encoding='utf-8') as f:
+                json.dump({}, f)
 
     def read_json(self) -> dict:
         """
@@ -16,14 +22,11 @@ class Json:
         :return:
         """
         try:
-            with open(self.json_project_names_path) as file:
-                return json.load(file)
+            with open(self.json_project_names_path) as f:
+                return json.load(f)
+
         except Exception as e:
-            # self.lg.error_log_file(f"{e}: Отсутствует файл ./Logs/created_project_names.json")
-
-            with open(self.json_project_names_path, 'w', encoding='utf-8') as f:
-                json.dump({}, f)
-
+            self.lg.error_log_file(f"{e}: READ JSON PROBLEM")
 
     def write_json(self, value: dict):
         """
@@ -31,8 +34,13 @@ class Json:
         :param value: словарь с данными для записи
         :return: None
         """
-        with open(self.json_project_names_path, 'w') as file:
-            json.dump(value, file)
+        try:
+            with open(self.json_project_names_path, 'w', encoding='utf-8') as f:
+                json.dump(value, f)
+
+        except Exception as e:
+            self.lg.error_log_file(f"{e}: WRITE JSON PROBLEM")
+
 
     def read_subject_data(self) -> dict:
         """

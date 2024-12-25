@@ -1,5 +1,6 @@
 import time
 import sys
+import asyncio
 
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponseBadRequest, HttpResponse
@@ -13,7 +14,7 @@ from Backend.compare_data import CompareData, ReleaseResults
 from Backend.add_to_sqlite import AddToSQL
 from Backend.startup_scripts import FreeScripts, DataSearcher
 from Backend.log_files import Log
-from Backend.observer import FileObserver
+from Backend.observer import RunObserver
 
 sys.path.append('/web/fsweb')
 from fsweb.models import Projects, Subjects
@@ -44,8 +45,8 @@ class IndexView(View):
         :param request: request
         :return: index.html
         """
-        obs = FileObserver()
-        obs.search_aseg_stats()
+        # obs = FileObserver()
+        # obs.search_aseg_stats()
         return render(request, "index.html")
 
 
@@ -91,20 +92,27 @@ class CreateProjectView(View):
             date_of_study = request.POST.get("date_of_study")
             pathology = request.POST.get("pathology_name")
 
-            key = f"{project_name}_{subject_name}_{time.time()}"
-
-            self.fr.start_up_preprocessing(f'{parameter} '
-                                           f'{file_name}.nii '
-                                           f'{key} '
-                                           f'-3t')
+            folder_name = f"{project_name}_{subject_name}_{time.time()}"
             diction = {'project': project_name, 'subject': subject_name, 'sex': sex_s,
                        'date_of_birth': date_of_birth, 'date_of_study': date_of_study, 'pathology': pathology}
-            self.lg.write_subject_data_to_json(key, diction)
+            
+            self.lg.log_subject_data_json(folder_name, diction)
+            self.lg.event_log_file(f"Запись в eventlog log_subject_data_json")
+
+            self.ror = RunObserver(folder_name)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.run_observer(parameter, file_name, folder_name, request))
+
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: Проблема в CreateProjectView.post")
             return HttpResponseNotFound("<h2>Ошибка при создании проекта</h2>")
+
+    async def run_observer(self, parameter, file_name, folder_name, request):
+        await self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name} -3t', folder_name)
+        await self.ror()
 
 
 class ProjectsView(View):
@@ -122,7 +130,7 @@ class ProjectsView(View):
             return render(request, 'projects_list.html', context)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в ProjectsView.get")
+            Log().lg.error_log_file(f"{e}: Проблема в ProjectsView.get")
             return HttpResponseNotFound("<h2>Ошибка при получении проекта</h2>")
 
 
@@ -367,7 +375,9 @@ class ViewerView(View):
         """
         fr = FreeScripts()
         fr.start_up_freeview('freeview')
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        # return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return render(request, "info.html")
+
 
 
 class LieViewerView(View):
