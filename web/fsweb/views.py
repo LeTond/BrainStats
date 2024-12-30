@@ -4,7 +4,7 @@ import asyncio
 
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponseBadRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import View
 from django.db.models import Q
 
@@ -19,6 +19,8 @@ from Backend.observer import RunObserver
 sys.path.append('/web/fsweb')
 from fsweb.models import Projects, Subjects
 
+sys.path.append('/web/Configuration')
+from Configuration.log_messages import *
 
 
 def common_search(request, model, query):
@@ -29,10 +31,13 @@ def common_search(request, model, query):
     else:
         model_list = model.objects.all()
     p = Paginator(model_list, 25)
+    
     try:
         page = p.page(page_num)
+    
     except PageNotAnInteger:
         page = p.page(1)
+    
     except EmptyPage:
         page = p.page(1)
     return page
@@ -45,8 +50,6 @@ class IndexView(View):
         :param request: request
         :return: index.html
         """
-        # obs = FileObserver()
-        # obs.search_aseg_stats()
         return render(request, "index.html")
 
 
@@ -67,12 +70,13 @@ class CreateProjectView(View):
             files = self.ds.search_files()
             parameters = self.ds.start_up_parameter()
             sex_s = self.ds.sex_list()
+
             return render(request, "new_project.html", {"files": files,
                                                         "parameters": parameters,
                                                         "sex_s": sex_s})
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в CreateProjectView.get")
-            return HttpResponseNotFound("<h2>Ошибка при получении проекта</h2>")
+            self.lg.error_log_file(f"{e}: {MESSAGE_VIEW_CREATE_PROJECT_GET}")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_VIEW_CREATE_PROJECT_GET}</h2>")
 
     def post(self, request):
         """
@@ -97,21 +101,22 @@ class CreateProjectView(View):
                        'date_of_birth': date_of_birth, 'date_of_study': date_of_study, 'pathology': pathology}
             
             self.lg.log_subject_data_json(folder_name, diction)
-            self.lg.event_log_file(f"Запись в eventlog log_subject_data_json")
+            self.lg.event_log_file(f"{MESSAGE_WRITE_JSON_SUBJECT}: {folder_name}")
 
             self.ror = RunObserver(folder_name)
+
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(self.run_observer(parameter, file_name, folder_name, request))
+            loop.run_until_complete(self.run_observer(parameter, file_name, folder_name))
 
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
+            
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в CreateProjectView.post")
-            return HttpResponseNotFound("<h2>Ошибка при создании проекта</h2>")
+            self.lg.error_log_file(f"{e}: {MESSAGE_VIEW_CREATE_PROJECT_POST}")
+            return HttpResponseNotFound(f"<h2>{e}: {MESSAGE_VIEW_CREATE_PROJECT_POST}</h2>")
 
-    async def run_observer(self, parameter, file_name, folder_name, request):
-        await self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name} -3t', folder_name)
+    async def run_observer(self, parameter, file_name, folder_name):
+        await self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name}', folder_name)
         await self.ror()
 
 
@@ -130,8 +135,8 @@ class ProjectsView(View):
             return render(request, 'projects_list.html', context)
 
         except Exception as e:
-            Log().lg.error_log_file(f"{e}: Проблема в ProjectsView.get")
-            return HttpResponseNotFound("<h2>Ошибка при получении проекта</h2>")
+            Log().error_log_file(f"{e}: {MESSAGE_PROJECTVIEW_GET_PROBLEM}")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_PROJECTVIEW_GET_PROBLEM}</h2>")
 
 
 class SubjectsView(View):
@@ -151,11 +156,15 @@ class SubjectsView(View):
                                                        Q(date_of_study__icontains=query)).all()
             else:
                 subject_list = Subjects.objects.all()
-            p = Paginator(subject_list, 25)
+            
+            p = Paginator(subject_list, 10)
+         
             try:
                 page = p.page(page_num)
+         
             except PageNotAnInteger:
                 page = p.page(1)
+         
             except EmptyPage:
                 page = p.page(1)
             context = {'subject_list': page,
@@ -164,8 +173,8 @@ class SubjectsView(View):
             return render(request, 'subjects_list.html', context)
         
         except Exception as e:
-            Log().error_log_file(f"{e} : Проблема в SubjectsView.get")
-            return HttpResponseNotFound("<h2>Ошибка при получении субъектов</h2>")
+            Log().error_log_file(f"{e} : {MESSAGE_SUBJECTVIEW_GET_PROBLEM}")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_SUBJECTVIEW_GET_PROBLEM}</h2>")
 
         
 class StatisticView(View):
@@ -189,8 +198,13 @@ class StatisticView(View):
                        'release_stat': release_stat_list,
                        'main_stats': release_main_stat_list}
             return render(request, 'statistic_list.html', context)
+        
         except ConnectionError:
-            return HttpResponseNotFound("<h2>Ошибка подключения</h2>")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_CONNECTION_ERROR}</h2>")
+
+        except Exception as e:
+            Log().error_log_file(f"{e} : {MESSAGE_STATISTICVIEW_GET_PROBLEM}")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_STATISTICVIEW_GET_PROBLEM}</h2>")
 
 
 class InstructionsView(View):
@@ -214,7 +228,10 @@ class ProjectEditView(View):
         try:
             project = Projects.objects.get(id=project_id)
             return render(request, "edit_project.html", {"project": project})
+       
         except Projects.DoesNotExist:
+            Log().error_log_file(f"{project} {MESSAGE_PROJECT_DONT_EXIST}")
+
             return render(request, 'projects_list.html')
 
     @staticmethod
@@ -229,6 +246,7 @@ class ProjectEditView(View):
         project.save()
         project_list = Projects.objects.filter(id=project_id)
         context = {'project_list': project_list}
+       
         return render(request, "projects_list.html", context)
 
 
@@ -243,7 +261,10 @@ class SubjectEditView(View):
         try:
             subject = Subjects.objects.get(id=subject_id)
             return render(request, "edit_subject.html", {"subject": subject})
+        
         except Subjects.DoesNotExist:
+            Log().error_log_file(f"{subject} {MESSAGE_SUBJECT_DONT_EXIST}")
+
             return render(request, 'subjects_list.html')
 
     @staticmethod
@@ -266,6 +287,7 @@ class SubjectEditView(View):
         subject.save()
         subject_list = Subjects.objects.filter(id=subject_id)
         context = {'subject_list': subject_list}
+        
         return render(request, "subjects_list.html", context)
 
 
@@ -280,14 +302,18 @@ class SubjectsInProjectView(View):
         page_num = request.GET.get('page', 1)
         subject_list = Subjects.objects.filter(Q(project__id=project_id)).all()
         p = Paginator(subject_list, 15)
+        
         try:
             page = p.page(page_num)
+        
         except PageNotAnInteger:
             page = p.page(1)
+        
         except EmptyPage:
             page = p.page(1)
         context = {'subject_list': page,
                    'project_subjects': subject_list}
+        
         return render(request, 'subjects_list.html', context)
 
 
@@ -302,11 +328,13 @@ class ProjectDeleteView(View):
         try:
             Projects.objects.get(id=project_id).delete()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        except TypeError:
-            return HttpResponseNotFound("<h2>Возможно, вы пытаетесь удалить проект, в котором есть исследования. "
-                                        "Перед удалением проекта, убедитесь, что все исследования в нем удалены</h2>")
+        
+        # except TypeError:
+        #     return HttpResponseNotFound(f"<h2>{MESSAGE_PROJECT_DELETE_WARNING}</h2>")
+        
         except Projects.DoesNotExist:
-            return HttpResponseNotFound("<h2>Project not found</h2>")
+            Log().error_log_file(f"{MESSAGE_PROJECT_DONT_EXIST}")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_PROJECT_DONT_EXIST}</h2>")
 
 
 class SubjectDeleteView(View):
@@ -324,8 +352,10 @@ class SubjectDeleteView(View):
             subject.delete()
 
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        
         except Projects.DoesNotExist:
-            return HttpResponseNotFound("<h2>Subject not found</h2>")
+            Log().error_log_file(f"{subject} {MESSAGE_SUBJECT_DONT_EXIST}")
+            return HttpResponseNotFound(f"<h2>{MESSAGE_SUBJECT_DONT_EXIST}</h2>")
 
 
 class CompareSubjectsView(View):
@@ -351,6 +381,7 @@ class CompareSubjectsView(View):
                    'orig_list': compare_structure_list['orig_list'],
                    'subject': subject,
                    'compare_subject': compare_subject}
+
         return render(request, "compare_list.html", context)
 
 
@@ -379,7 +410,6 @@ class ViewerView(View):
         return render(request, "info.html")
 
 
-
 class LieViewerView(View):
     @staticmethod
     def get(request):
@@ -389,3 +419,6 @@ class LieViewerView(View):
         :return: lie_viewer.html
         """
         return render(request, "lie_viewer.html")
+
+
+

@@ -9,6 +9,9 @@ sys.path.append('/web/fsweb')
 from fsweb.models import Projects, Subjects, StructureStatistic, MainStatistic, Pathology
 from django.db import transaction
 
+sys.path.append('/web/Configuration')
+from Configuration.log_messages import *
+
 
 class AddToSQL:
     def __init__(self):
@@ -26,7 +29,7 @@ class AddToSQL:
         try:
             project = Projects.objects.get(name=project_name)
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.project")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_PROJECT}")
 
             Projects.objects.create(name=project_name)
             project = Projects.objects.get(name=project_name)
@@ -56,7 +59,7 @@ class AddToSQL:
             return pk
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.subject")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_SUBJECT}")
 
     def structure_statistic(self, project_path: str, subject_id: int):
         """
@@ -83,7 +86,7 @@ class AddToSQL:
             self.relations_subject_statistic(subject_id, id_list)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.structure_statistic")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_STRUCTURE_STATISTIC}")
 
     def main_statistic(self, project_path: str, subject_id: int):
         """
@@ -110,7 +113,7 @@ class AddToSQL:
             self.relations_subject_main_statistic(subject_id, pk)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.main_statistic")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_MAIN_STATISTIC}")
 
     def pathology(self, pathology_name: str):
         """
@@ -121,7 +124,7 @@ class AddToSQL:
         try:
             pathology = Pathology.objects.get(name=pathology_name)
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.pathology")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_PATHOLOGY}")
 
             Pathology.objects.create(name=pathology_name)
             pathology = Pathology.objects.get(name=pathology_name)
@@ -142,7 +145,7 @@ class AddToSQL:
                     subject.statistic.add(StructureStatistic.objects.get(id=stat_id).id)
         
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.relations_subject_statistic")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_RSS}")
 
     def relations_subject_main_statistic(self, subject_id: int, stat_id: int):
         """
@@ -157,6 +160,6 @@ class AddToSQL:
                 subject.main_statistic.add(MainStatistic.objects.get(id=stat_id).id)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в AddToSQL.relations_subject_main_statistic")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_RSMS}")
 
 

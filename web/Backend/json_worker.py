@@ -4,6 +4,7 @@ import json
 sys.path.append('/web/Configuration')
 
 from Configuration.key_words_and_directories_list import json_project_names_path
+from Configuration.log_messages import *
 
 
 class Json:
@@ -26,7 +27,7 @@ class Json:
                 return json.load(f)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: READ JSON PROBLEM")
+            self.lg.error_log_file(f"{e}: {MESSAGE_READ_JSON_PROBLEM}")
 
     def write_json(self, value: dict):
         """
@@ -39,7 +40,7 @@ class Json:
                 json.dump(value, f)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: WRITE JSON PROBLEM")
+            self.lg.error_log_file(f"{e}: {MESSAGE_WRITE_JSON_PROBLEM}")
 
 
     def read_subject_data(self) -> dict:

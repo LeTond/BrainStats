@@ -8,6 +8,7 @@ from Backend.log_files import Log
 
 sys.path.append('/web/Configuration')
 from Configuration.key_words_and_directories_list import preprocess_script_path, view_script_path, subjects_path
+from Configuration.log_messages import *
 
 # from watchdog.observers import Observer
 from typing import AnyStr
@@ -34,9 +35,11 @@ class DataSearcher:
         """
         start_up_parameter = [
             "-all",
-            "-all -3t",
+            "-hemi lh",
+            "-hemi rh",
+            "-autorecon1",
             "-autorecon2",
-            "-autorecon-segstats ",
+            "-autorecon3",
         ]
         return start_up_parameter
 
@@ -76,7 +79,9 @@ class FreeScripts:
         command_list = [f'{preprocess_script_path} {command}']
         
         await asyncio.sleep(1)
-        lg.event_log_file(f"Выполнили запуск FreeSurfer Preprocessing для {folder_name} FreeScripts.start_up_preprocessing")
+        
+        lg.event_log_file(f"{MESSAGE_FSR_STARTUP} {folder_name} ")
+        lg.event_log_file(command_list)
 
         subprocess.Popen(command_list, shell = True, executable = '/bin/bash', cwd = '/')
         await asyncio.sleep(1)

@@ -44,7 +44,7 @@ class EventHandler(FileSystemEventHandler):
         else:
             self.__is_active_observer = new_status
 
-    def search_existing_projects(self) -> list:
+    def search_exist_projects(self) -> list:
         """
         Просматриваем и создает список с имеющимися обработанными исследованиями
         :return: Возвращает список с местонахождением файлов со статистикой (aseg.stats)
@@ -56,33 +56,11 @@ class EventHandler(FileSystemEventHandler):
                     if 'aseg.stats' == file:
                         directs_list.append(directs)
         
-            self.lg.event_log_file(f"Найден новый aseg.stats в EventHandler.search_existing_projects")
+            self.lg.event_log_file(f"Was Found new aseg.stats by EventHandler.search_existing_projects")
             return directs_list
         
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Проблема в EventHandler.search_existing_projects")
-            print("Проблема в EventHandler.search_existing_projects")
-
-    def search_aseg_stats(self):
-        """
-        Просматривает наличие новых обработанных данных, добавляет их в спискок учета проектов (list_projects_path) и
-        вызывает БД для сохранения статистических данных.
-        :return: None
-        """
-        try:
-            list_projects_paths = open(self.projects_paths, 'r')    # Открываем лог с сохранёнными проектами
-            list_of_projects_path = list_projects_paths.read().split('\n')
-            for project_path in self.search_existing_projects():
-                if project_path not in list_of_projects_path:
-                    self.save_new_project(self.pr.project_name(project_path), project_path)
-                    write_to_list = open(self.projects_paths, 'a')
-                    write_to_list.write(project_path + '\n')
-        
-            self.lg.event_log_file(f"Выполнено добавление записи о новом проекте в {self.projects_paths} FileObserver.search_aseg_stats")
-
-        except ConnectionError:
-            self.lg.error_log_file(f"ConnectionError: {project_path}")
-            print("Ошибка подключения к БД")
+            self.lg.error_log_file(f"{e}: Problem with EventHandler.search_existing_projects")
 
     def save_new_project(self, project_key: str, project_path: str):
         """
@@ -95,16 +73,15 @@ class EventHandler(FileSystemEventHandler):
         try:
             project_name = self.json.read_subject_data()[project_key]["project"]
             pathology_name = self.json.read_subject_data()[project_key]["pathology"]
-
+            
             project_id = self.sql.project(project_name)
             pathology_id = self.sql.pathology(pathology_name)
             subject_id = self.sql.subject(project_key, project_id, pathology_id)
 
             self.sql.structure_statistic(project_path, subject_id)
             self.sql.main_statistic(project_path, subject_id)
-
             # self.json.delete_subject_data_from_json(project_name)
-            self.lg.event_log_file(f"Added {project_name.upper()} aseg.stats to Sqlite")
+            self.lg.event_log_file(f"Added aseg.stats result data to Sqlite. Study: {project_name}")
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: Problem with EventHandler.save_new_project")
@@ -116,25 +93,28 @@ class EventHandler(FileSystemEventHandler):
     def on_created(self, event):
         new_project_path = self.subjects_path + self.folder_name
 
-        self.lg.event_log_file(f"Сработал метод ON_CREATED {event.src_path}")
         if (event.src_path == f"{new_project_path}/stats/aseg.stats"):
+            self.lg.event_log_file(f"ON_CREATED found a new aseg.stats {event.src_path}")
+
             try:
                 list_projects = open(self.list_projects_paths, 'r')    # Открываем лог с сохранёнными проектами
                 list_projects = list_projects.read().split('\n')
-
-                self.save_new_project(self.pr.project_name(new_project_path), new_project_path)
                 
+                self.save_new_project(self.pr.project_name(new_project_path), new_project_path)
+
                 if new_project_path not in list_projects:
                     write_to_list = open(self.list_projects_paths, 'a')
                     write_to_list.write(new_project_path + '\n')
                    
-                    self.lg.event_log_file(f"Выполнено добавление записи о новом проекте в {self.list_projects_paths} EventHandler.on_created ")
-                    self.lg.event_log_file(f"Выполнили остановку Observer для {self.folder_name} EventHandler.on_created")
-                    
+                    self.lg.event_log_file(f"Log info was saved: {self.list_projects_paths}")                    
                     self.is_active_observer = False
+                    self.lg.event_log_file(f"Observer {self.folder_name} was STOPPED")
 
             except ConnectionError:
-                self.lg.error_log_file(f"ConnectionError: {new_project_path}")
+                self.lg.error_log_file(f"ConnectionError: {new_project_path} while ON_CREATED")
+
+            except Exception as e:
+                self.lg.error_log_file(f"Exception Error: {e} while ON_CREATED")
 
     def on_deleted(self, event):
         pass
@@ -155,14 +135,20 @@ class RunObserver:
         self.lg.event_log_file(f"START RunObserver for {self.folder_name}")
     
     async def __call__(self):
+        counter = 0
         event_handler = EventHandler(self.folder_name)
         observer = Observer()
         observer.schedule(event_handler, path = (self.subjects_path + self.folder_name + '/stats/'), recursive = False)
         observer.start()
 
-        while event_handler.is_active_observer:
+        while event_handler.is_active_observer or counter < 1000:
             try:
+                counter += 1
                 await asyncio.sleep(60)
             
             except KeyboardInterrupt:
                 observer.stop()
+
+            except Exception as e:
+                self.lg.error_log_file(f"Exception Error: {e} while __CALL__ RunObserver")
+
