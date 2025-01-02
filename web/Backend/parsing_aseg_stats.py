@@ -1,6 +1,9 @@
-import os
+import os, sys
 
 from Backend.log_files import Log
+
+sys.path.append('/web/Configuration')
+from Configuration.log_messages import *
 
 
 class ParsingResults:
@@ -19,27 +22,27 @@ class ParsingResults:
                     if 'aseg.stats' == file:
                         with open(directs + '/' + file, 'r', encoding='utf-8') as f:
                             split_statistic_list = f.read().split('\n')
-            return split_statistic_list
+                        
+                        return split_statistic_list
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Ошибка чтения файла ParsingResults.open_aseg_stat_file")
-            print("{Ошибка {e}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_ASEG_STATS_ERROR}")
 
     def project_name(self, project_path: str) -> str:
         """
         Определяем имя обработанного субъекта
         :return: возвращаем имя субъекта
         """
-        project_name = ''
         try:
-            for i in self.open_aseg_stat_file(project_path):
-                if '# subjectname' in i:
-                    j_list = i.split(' ')
+            for sentence in self.open_aseg_stat_file(project_path):
+                if '# subjectname' in sentence:
+                    j_list = sentence.split(' ')
                     project_name = j_list[2]
-            return project_name
+            
+                    return project_name
+        
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Ошибка чтения файла ParsingResults.project_name")
-            print("{Ошибка {e}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_ASEG_STATS_PROJECT_NAME_ERROR}")
 
     def main_statistic_data(self, project_path: str) -> list:
         """
@@ -49,17 +52,21 @@ class ParsingResults:
         """
         try:
             m_s_dict = {}
-            for i in self.open_aseg_stat_file(project_path):
-                if '# Measure' in i:
-                    j_list = i.split(', ')
+            
+            for sntc in self.open_aseg_stat_file(project_path):
+                if '# Measure' in sntc:
+                    j_list = sntc.split(', ')
                     j = [k for k in j_list if k != '']
+                    
                     try:
                         m_s_dict[j[1]] = j[3]
+                    
                     except IndexError:
-                        print('Ошибка')
-                        self.lg.error_log_file(f"IndexError: Ошибка создания словаря ParsingResults.main_statistic_data")
+                        self.lg.error_log_file(f"{MESSAGE_ASEG_STATS_INDEX_ERROR}")
+                    
                     else:
                         pass
+            
             main_stat = [
                 m_s_dict['BrainSegVol'], m_s_dict['VentricleChoroidVol'], m_s_dict['lhCortexVol'],
                 m_s_dict['rhCortexVol'], m_s_dict['CortexVol'], m_s_dict['lhCerebralWhiteMatterVol'],
@@ -67,11 +74,11 @@ class ParsingResults:
                 m_s_dict['SubCortGrayVol'], m_s_dict['TotalGrayVol'], m_s_dict['SupraTentorialVol'],
                 m_s_dict['eTIV']
             ]
+
             return main_stat
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Ошибка чтения файла ParsingResults.main_statistic_data")
-            print("{Ошибка {e}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_ASEG_STATS_MAIN_ERROR}")
 
     def structure_statistic_data(self, project_path: str) -> list:
         """
@@ -83,17 +90,21 @@ class ParsingResults:
         for i in self.open_aseg_stat_file(project_path):
             if i == "":
                 pass
+            
             elif '#' not in i:
                 j_list = i.split(' ')
                 j = [k for k in j_list if k != '']
+                
                 try:
                     statistic_list.append(
                         [j[4], int(j[2]), float(j[3]), float(j[5]), float(j[6]),
                          float(j[7]), float(j[8]), float(j[9])]
                     )
+                
                 except IndexError:
-                    self.lg.error_log_file(f"IndexError: Ошибка создания списка statistic")
-                    print('Ошибка')
+                    self.lg.error_log_file(f"{MESSAGE_ASEG_STATS_STRUCTURE_ERROR}")
+                
                 else:
                     pass
+        
         return statistic_list

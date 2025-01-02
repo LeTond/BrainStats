@@ -103,8 +103,6 @@ class CreateProjectView(View):
             self.lg.log_subject_data_json(folder_name, diction)
             self.lg.event_log_file(f"{MESSAGE_WRITE_JSON_SUBJECT}: {folder_name}")
 
-            self.ror = RunObserver(folder_name)
-
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(self.run_observer(parameter, file_name, folder_name))
@@ -116,8 +114,10 @@ class CreateProjectView(View):
             return HttpResponseNotFound(f"<h2>{e}: {MESSAGE_VIEW_CREATE_PROJECT_POST}</h2>")
 
     async def run_observer(self, parameter, file_name, folder_name):
-        await self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name}', folder_name)
-        await self.ror()
+        ror = RunObserver(folder_name)
+
+        await self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name}', folder_name)        
+        await ror()
 
 
 class ProjectsView(View):

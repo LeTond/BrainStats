@@ -9,7 +9,8 @@ from Backend.log_files import Log
 from Backend.parsing_aseg_stats import ParsingResults
 
 sys.path.append('/web/Configuration')
-from Configuration.key_words_and_directories_list import home_directory, projects_paths, subjects_path, list_projects_paths
+from Configuration.key_words_and_directories_list import projects_paths, subjects_path, list_projects_paths
+from Configuration.log_messages import *
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -51,16 +52,16 @@ class EventHandler(FileSystemEventHandler):
         """
         try:
             directs_list = []
-            for directs, direct, files in os.walk(self.home_directory):
+            for directs, direct, files in os.walk(self.subjects_path):
                 for file in files:
                     if 'aseg.stats' == file:
                         directs_list.append(directs)
         
-            self.lg.event_log_file(f"Was Found new aseg.stats by EventHandler.search_existing_projects")
+            self.lg.event_log_file(f"{MESSAGE_SEARCH_EXIST_PROJECT}")
             return directs_list
         
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Problem with EventHandler.search_existing_projects")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SEARCH_EXIST_PROJECT_ERROR}")
 
     def save_new_project(self, project_key: str, project_path: str):
         """
@@ -81,10 +82,10 @@ class EventHandler(FileSystemEventHandler):
             self.sql.structure_statistic(project_path, subject_id)
             self.sql.main_statistic(project_path, subject_id)
             # self.json.delete_subject_data_from_json(project_name)
-            self.lg.event_log_file(f"Added aseg.stats result data to Sqlite. Study: {project_name}")
+            self.lg.event_log_file(f"{MESSAGE_ADD_NEW_RESULTS} {project_name}")
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: Problem with EventHandler.save_new_project")
+            self.lg.error_log_file(f"{e}: {MESSAGE_ADD_NEW_RESULTS_ERROR}")
 
     def on_any_event(self, event):
         print(event.src_path)
@@ -94,7 +95,7 @@ class EventHandler(FileSystemEventHandler):
         new_project_path = self.subjects_path + self.folder_name
 
         if (event.src_path == f"{new_project_path}/stats/aseg.stats"):
-            self.lg.event_log_file(f"ON_CREATED found a new aseg.stats {event.src_path}")
+            self.lg.event_log_file(f"{MESSAGE_ON_CREATED} {event.src_path}")
 
             try:
                 list_projects = open(self.list_projects_paths, 'r')    # Открываем лог с сохранёнными проектами
@@ -106,15 +107,15 @@ class EventHandler(FileSystemEventHandler):
                     write_to_list = open(self.list_projects_paths, 'a')
                     write_to_list.write(new_project_path + '\n')
                    
-                    self.lg.event_log_file(f"Log info was saved: {self.list_projects_paths}")                    
+                    self.lg.event_log_file(f"{MESSAGE_ON_CREATED_LOG_SAVED} {self.list_projects_paths}")
                     self.is_active_observer = False
-                    self.lg.event_log_file(f"Observer {self.folder_name} was STOPPED")
+                    self.lg.event_log_file(f"{MESSAGE_ON_CREATED_OBSERVER_STOPPED} {self.folder_name}")
 
             except ConnectionError:
-                self.lg.error_log_file(f"ConnectionError: {new_project_path} while ON_CREATED")
+                self.lg.error_log_file(f"{MESSAGE_CONNECTION_ERROR}: ON_CREATED {new_project_path}")
 
             except Exception as e:
-                self.lg.error_log_file(f"Exception Error: {e} while ON_CREATED")
+                self.lg.error_log_file(f"{e}: {MESSAGE_ON_CREATED_ERROR} {new_project_path}")
 
     def on_deleted(self, event):
         pass
@@ -132,23 +133,23 @@ class RunObserver:
         self.subjects_path = subjects_path
         self.folder_name = folder_name
         self.lg = Log()
-        self.lg.event_log_file(f"START RunObserver for {self.folder_name}")
+        self.lg.event_log_file(f"{MESSAGE_RUN_OBSERVER} {self.folder_name}")
+        self.counter = 0
     
     async def __call__(self):
-        counter = 0
-        event_handler = EventHandler(self.folder_name)
-        observer = Observer()
-        observer.schedule(event_handler, path = (self.subjects_path + self.folder_name + '/stats/'), recursive = False)
-        observer.start()
+        try:
+            event_handler = EventHandler(self.folder_name)
+            observer = Observer()
+            observer.schedule(event_handler, path = (self.subjects_path + self.folder_name + '/stats/'), recursive = False)
+            observer.start()
 
-        while event_handler.is_active_observer or counter < 1000:
-            try:
-                counter += 1
-                await asyncio.sleep(60)
-            
-            except KeyboardInterrupt:
-                observer.stop()
+            while event_handler.is_active_observer and self.counter < 1000:
+                try:
+                    self.counter += 1
+                    await asyncio.sleep(60)
+                
+                except KeyboardInterrupt:
+                    observer.stop()
 
-            except Exception as e:
-                self.lg.error_log_file(f"Exception Error: {e} while __CALL__ RunObserver")
-
+        except Exception as e:
+            self.lg.error_log_file(f"{e} {MESSAGE_RUN_OBSERVER_ERROR}")

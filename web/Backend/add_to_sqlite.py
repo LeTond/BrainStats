@@ -29,7 +29,7 @@ class AddToSQL:
         try:
             project = Projects.objects.get(name=project_name)
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_PROJECT}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_PROJECT_PROBLEM}")
 
             Projects.objects.create(name=project_name)
             project = Projects.objects.get(name=project_name)
@@ -59,7 +59,7 @@ class AddToSQL:
             return pk
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_SUBJECT}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_SUBJECT_PROBLEM}")
 
     def structure_statistic(self, project_path: str, subject_id: int):
         """
@@ -86,7 +86,7 @@ class AddToSQL:
             self.relations_subject_statistic(subject_id, id_list)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_STRUCTURE_STATISTIC}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_STRUCTURE_STATISTIC_PROBLEM}")
 
     def main_statistic(self, project_path: str, subject_id: int):
         """
@@ -113,7 +113,7 @@ class AddToSQL:
             self.relations_subject_main_statistic(subject_id, pk)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_MAIN_STATISTIC}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_MAIN_STATISTIC_PROBLEM}")
 
     def pathology(self, pathology_name: str):
         """
@@ -124,7 +124,7 @@ class AddToSQL:
         try:
             pathology = Pathology.objects.get(name=pathology_name)
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_PATHOLOGY}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_PATHOLOGY_PROBLEM}")
 
             Pathology.objects.create(name=pathology_name)
             pathology = Pathology.objects.get(name=pathology_name)
@@ -145,7 +145,7 @@ class AddToSQL:
                     subject.statistic.add(StructureStatistic.objects.get(id=stat_id).id)
         
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_RSS}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_RSS_PROBLEM}")
 
     def relations_subject_main_statistic(self, subject_id: int, stat_id: int):
         """
@@ -160,6 +160,6 @@ class AddToSQL:
                 subject.main_statistic.add(MainStatistic.objects.get(id=stat_id).id)
 
         except Exception as e:
-            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_RSMS}")
+            self.lg.error_log_file(f"{e}: {MESSAGE_SQL_RSMS_PROBLEM}")
 
 
