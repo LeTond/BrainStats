@@ -24,7 +24,6 @@ class EventHandler(FileSystemEventHandler):
     def __init__(self, folder_name):
         self.folder_name = folder_name
         self.subjects_path = subjects_path
-        self.home_directory = home_directory
         self.list_projects_paths = list_projects_paths
         self.lg = Log()
         self.json = Json()
