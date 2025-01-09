@@ -3,6 +3,7 @@
 #######################################################################################
 ##startup_scripts.py
 MESSAGE_FSR_STARTUP = 'START FreeScripts.START_UP_PREPROCESSING METHOD for study'
+MESSAGE_STOP_FREESURFER = 'FreeSurfer Subprocess was STOPPED'
 
 ##views.py
 MESSAGE_WRITE_JSON_SUBJECT = 'Write to log_subject_data_json new ran Subject'
@@ -53,6 +54,10 @@ MESSAGE_SEARCH_EXIST_PROJECT_ERROR = 'Problem with EventHandler.search_existing_
 MESSAGE_ADD_NEW_RESULTS_ERROR =  'Problem with EventHandler.save_new_project'
 MESSAGE_ON_CREATED_ERROR = 'Exception Error while ON_CREATED'
 MESSAGE_RUN_OBSERVER_ERROR = 'Exception Error while __CALL__ RunObserver'
+MESSAGE_OBSERVER_PROBLEM = 'Exception Problem while work observer'
+
+##startup_scripts.py
+MESSAGE_RUN_START_FREESURFER_PROBLEM = 'Exception Start FreeSurfer Problem'
 
 #######################################################################################
 ## 		WARNING MESSAGES

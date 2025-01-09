@@ -1,6 +1,9 @@
 import time
 import sys
 import asyncio
+import threading
+
+from daphne.server import twisted_loop
 
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponseBadRequest, HttpResponse
@@ -102,22 +105,37 @@ class CreateProjectView(View):
             
             self.lg.log_subject_data_json(folder_name, diction)
             self.lg.event_log_file(f"{MESSAGE_WRITE_JSON_SUBJECT}: {folder_name}")
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(self.run_observer(parameter, file_name, folder_name))
+            self.launch_background_task(request, parameter, file_name, folder_name)
 
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            
+
         except Exception as e:
             self.lg.error_log_file(f"{e}: {MESSAGE_VIEW_CREATE_PROJECT_POST}")
             return HttpResponseNotFound(f"<h2>{e}: {MESSAGE_VIEW_CREATE_PROJECT_POST}</h2>")
 
+    def long_process(self, parameter, file_name, folder_name):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.run_observer(parameter, file_name, folder_name))
+        
+    def launch_background_task(self, request, parameter, file_name, folder_name):
+        t = threading.Thread(target = self.long_process, args = (parameter, file_name, folder_name))
+        t.setDaemon(True)
+        t.start()
+        
+        # return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    async def counter(self):
+        for i in range(3):
+            self.lg.event_log_file(f"LOOOOOOOOOOOOOOOOOOOOP {i}")
+            await asyncio.sleep(5)
+    
     async def run_observer(self, parameter, file_name, folder_name):
         ror = RunObserver(folder_name)
 
-        await self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name}', folder_name)        
-        await ror()
+        await asyncio.create_task(self.fr.start_up_preprocessing(f'{parameter} {file_name}.nii {folder_name}', folder_name))
+        await asyncio.create_task(ror())
+
 
 
 class ProjectsView(View):

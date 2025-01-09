@@ -81,20 +81,21 @@ class EventHandler(FileSystemEventHandler):
             self.sql.structure_statistic(project_path, subject_id)
             self.sql.main_statistic(project_path, subject_id)
             # self.json.delete_subject_data_from_json(project_name)
-            self.lg.event_log_file(f"{MESSAGE_ADD_NEW_RESULTS} {project_name}")
+            self.lg.event_log_file(f"{MESSAGE_ADD_NEW_RESULTS} {project_key}")
 
         except Exception as e:
             self.lg.error_log_file(f"{e}: {MESSAGE_ADD_NEW_RESULTS_ERROR}")
 
     def on_any_event(self, event):
-        print(event.src_path)
+        # print(event.src_path)
+        self.lg.event_log_file(f"STARTED ON ANY EVENT")
         pass
 
     def on_created(self, event):
         new_project_path = self.subjects_path + self.folder_name
-
+        
         if (event.src_path == f"{new_project_path}/stats/aseg.stats"):
-            self.lg.event_log_file(f"{MESSAGE_ON_CREATED} {event.src_path}")
+            self.lg.event_log_file(f"{MESSAGE_ON_CREATED_FOUND} {event.src_path}")
 
             try:
                 list_projects = open(self.list_projects_paths, 'r')    # Открываем лог с сохранёнными проектами
@@ -108,7 +109,6 @@ class EventHandler(FileSystemEventHandler):
                    
                     self.lg.event_log_file(f"{MESSAGE_ON_CREATED_LOG_SAVED} {self.list_projects_paths}")
                     self.is_active_observer = False
-                    self.lg.event_log_file(f"{MESSAGE_ON_CREATED_OBSERVER_STOPPED} {self.folder_name}")
 
             except ConnectionError:
                 self.lg.error_log_file(f"{MESSAGE_CONNECTION_ERROR}: ON_CREATED {new_project_path}")
@@ -132,7 +132,6 @@ class RunObserver:
         self.subjects_path = subjects_path
         self.folder_name = folder_name
         self.lg = Log()
-        self.lg.event_log_file(f"{MESSAGE_RUN_OBSERVER} {self.folder_name}")
         self.counter = 0
     
     async def __call__(self):
@@ -141,14 +140,21 @@ class RunObserver:
             observer = Observer()
             observer.schedule(event_handler, path = (self.subjects_path + self.folder_name + '/stats/'), recursive = False)
             observer.start()
-
-            while event_handler.is_active_observer and self.counter < 1000:
-                try:
-                    self.counter += 1
-                    await asyncio.sleep(60)
-                
-                except KeyboardInterrupt:
-                    observer.stop()
+            self.lg.event_log_file(f"{MESSAGE_RUN_OBSERVER} {self.folder_name}")
 
         except Exception as e:
-            self.lg.error_log_file(f"{e} {MESSAGE_RUN_OBSERVER_ERROR}")
+            self.lg.error_log_file(f"{e} {MESSAGE_RUN_OBSERVER_ERROR}: {self.folder_name}")
+
+        try:
+            while event_handler.is_active_observer and self.counter < 1000:
+                await asyncio.sleep(60)
+
+        except KeyboardInterrupt:
+            observer.stop()
+
+        except Exception as e:
+            self.lg.error_log_file(f"{e} {MESSAGE_OBSERVER_PROBLEM}: {self.folder_name}")
+
+        finally:
+            observer.stop()
+            self.lg.event_log_file(f"{MESSAGE_ON_CREATED_OBSERVER_STOPPED} {self.folder_name}")
