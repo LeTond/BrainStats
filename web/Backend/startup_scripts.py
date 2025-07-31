@@ -4,6 +4,7 @@ import subprocess
 import asyncio
 
 from threading import Thread
+from typing import AnyStr
 
 from Backend.observer import RunObserver
 from Backend.log_files import Log
@@ -11,9 +12,6 @@ from Backend.log_files import Log
 sys.path.append('/web/Configuration')
 from Configuration.key_words_and_directories_list import preprocess_script_path, view_script_path, subjects_path
 from Configuration.log_messages import *
-
-# from watchdog.observers import Observer
-from typing import AnyStr
 
 
 class DataSearcher:
