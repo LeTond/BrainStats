@@ -19,7 +19,8 @@ A web shell for managing calculations of MR morphometry of the brain in freesurf
 ## Overview
 
 ### Highlights and Features
-BrainStat Allows you to store/delete the results of calculating MR morphometry in the freesurfer program in the database.
+BrainStat Allows you to store/delete the results of calculating MR morphometry 
+in the freesurfer program in the database.
 *******************************************************************************
 
 ![database](fsweb.png)
@@ -49,12 +50,14 @@ BrainStat Allows you to store/delete the results of calculating MR morphometry i
 
 *******************************************************************************
 ## Step 4 Comparing studies
-The web application allows you to compare two studies based on the reference volumes of the patient's brain.
+The web application allows you to compare two studies based on the reference 
+volumes of the patient's brain.
 
 *******************************************************************************
 ## System requirements 
 Tested on linux operating system (Ubuntu 20.04) macos (Sequoia 15.5 with Apple M1) ;
-Graphical web interface for computer processing of MR morphometry in the freesurfer program (version 7) and analysis of the results.
+Graphical web interface for computer processing of MR morphometry in the freesurfer 
+program (version 7) and analysis of the results.
 
 *******************************************************************************
 ## Cite
