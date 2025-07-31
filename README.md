@@ -29,15 +29,21 @@ in the freesurfer program in the database.
 ## Step 1 Installation
 
 ### Installing the necessary libraries
-<pre>conda create -n brainstat python=3.9
+```Shell
+conda create -n brainstat python=3.9
 conda activate brainstat
-pip install -r requirements.txt</pre>
+pip install -r requirements.txt
+```
 
 ### Going to the root directory
-<pre>cd ./web</pre>
+```Shell
+cd ./web
+```
 
 ### Starting a local server
-<pre>python manage.py runserver</pre>
+```Shell
+python manage.py runserver
+```
 
 *******************************************************************************
 ## Step 2 Preprocessing
