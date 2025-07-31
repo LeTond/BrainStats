@@ -33,8 +33,8 @@ in the freesurfer program in the database.
 
 ### Installing the necessary libraries
 <pre>conda create -n brainstat python=3.9
-<pre>conda activate brainstat
-<pre>pip install -r requirements.txt</pre>
+conda activate brainstat
+pip install -r requirements.txt</pre>
 
 ### Going to the root directory
 <pre>cd ./web</pre>
