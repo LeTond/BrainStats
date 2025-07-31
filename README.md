@@ -49,12 +49,14 @@ pip install -r requirements.txt</pre>
 ## Step 4 Comparing studies
 The web application allows you to compare two studies based on the reference 
 volumes of the patient's brain.
+
 Choose two studies to compare
 ![compare](content/comp01.png)
 
 The result will show the difference between the relative volumes of the structures, including positive and negative changes.
 ![compare](content/comp02.png)
 
+![compare](content/comp03.png)
 *******************************************************************************
 ## System requirements 
 Tested on linux operating system (Ubuntu 20.04) and MacOs (Sequoia 15.5 with Apple M1);
