@@ -55,7 +55,7 @@ volumes of the patient's brain.
 
 *******************************************************************************
 ## System requirements 
-Tested on linux operating system (Ubuntu 20.04) macos (Sequoia 15.5 with Apple M1) ;
+Tested on linux operating system (Ubuntu 20.04) and MacOs (Sequoia 15.5 with Apple M1);
 Graphical web interface for computer processing of MR morphometry in the freesurfer 
 program (version 7) and analysis of the results.
 
