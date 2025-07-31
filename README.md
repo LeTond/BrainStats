@@ -2,7 +2,7 @@
 
 *******************************************************************************
 ![brain-stats](web/fsweb/static/img/freeviewcrop.png)
-Веб-оболочка для управления обсчетами МР-морфометрии ГМ во freesurfer.
+A web shell for managing calculations of MR morphometry of the brain in freesurfer.
 
 *******************************************************************************
 ### Table of Contents
@@ -19,7 +19,8 @@
 ## Overview
 
 ### Highlights and Features
-Позволяет хранить/удалять результаты обсчета в БД.
+BrainStat Allows you to store/delete the results of calculating MR morphometry 
+in the freesurfer program in the database.
 *******************************************************************************
 
 ![database](fsweb.png)
@@ -30,13 +31,15 @@
 *******************************************************************************
 ## Step 1 Installation
 
-### Установка необходимых библиотек
-<pre>pip install -r requirements.txt</pre>
+### Installing the necessary libraries
+<pre>conda create -n brainstat python=3.9
+conda activate brainstat
+pip install -r requirements.txt</pre>
 
-### Переход в корневую директорию
+### Going to the root directory
 <pre>cd ./web</pre>
 
-### Запуск локального сервера
+### Starting a local server
 <pre>python manage.py runserver</pre>
 
 *******************************************************************************
@@ -47,12 +50,14 @@
 
 *******************************************************************************
 ## Step 4 Comparing studies
-Веб-приложение позволяет выполнять сравнение двух исследований по референсным объёмам ГМ пациентов.
+The web application allows you to compare two studies based on the reference 
+volumes of the patient's brain.
 
 *******************************************************************************
 ## System requirements 
-Операционная система linux, macos;
-Программа для компьютерной обработки МР-морфометрии freesurfer (version 7).
+Tested on linux operating system (Ubuntu 20.04) and MacOs (Sequoia 15.5 with Apple M1);
+Graphical web interface for computer processing of MR morphometry in the freesurfer 
+program (version 7) and analysis of the results.
 
 *******************************************************************************
 ## Cite
